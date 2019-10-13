@@ -1,0 +1,28 @@
+{:paths ["resources" "src"]
+ :deps {org.clojure/clojure {:mvn/version "RELEASE"}
+        org.clojure/core.match {:mvn/version "0.3.0"}
+        org.clojure/tools.cli {:mvn/version "0.4.2"}
+
+        kapibara {:git/url "https://github.com/chris-chambers/kapibara.git"
+                  :sha "e595334b77a55536b619f295b665337daaa5c0da"}}
+ :aliases
+ {:native
+  {:main-opts ["-m clj.native-image keel.main"
+               "--initialize-at-build-time"
+               "-H:Name=keel"]
+   :jvm-opts ["-Dclojure.compiler.direct-linking=true"]
+   :extra-deps
+   {clj.native-image
+    {:git/url "https://github.com/taylorwood/clj.native-image.git"
+     :sha "7708e7fd4572459c81f6a6b8e44c96f41cdd92d4"}}}
+
+  :test
+  {:extra-paths ["test"]
+   :extra-deps {org.clojure/test.check {:mvn/version "RELEASE"}}}
+
+  :runner
+  {:extra-deps {com.cognitect/test-runner
+                {:git/url "https://github.com/cognitect-labs/test-runner"
+                 :sha "76568540e7f40268ad2b646110f237a60295fa3c"}}
+   :main-opts ["-m" "cognitect.test-runner"
+               "-d" "test"]}}}
