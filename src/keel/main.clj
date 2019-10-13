@@ -1,3 +1,5 @@
+(set! *warn-on-reflection* true)
+
 (ns keel.main
   (:require [clojure.string :as str]
             [clojure.tools.cli :refer [parse-opts]]

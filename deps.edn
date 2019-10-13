@@ -1,14 +1,18 @@
 {:paths ["resources" "src"]
- :deps {org.clojure/clojure {:mvn/version "RELEASE"}
+ :deps {org.clojure/clojure {:mvn/version "1.8.0"}
         org.clojure/core.match {:mvn/version "0.3.0"}
         org.clojure/tools.cli {:mvn/version "0.4.2"}
 
         kapibara {:git/url "https://github.com/chris-chambers/kapibara.git"
-                  :sha "e595334b77a55536b619f295b665337daaa5c0da"}}
+                  :sha "759b18b7f46b1b0d1a910e6a078125b73080dacf"}}
  :aliases
  {:native
   {:main-opts ["-m clj.native-image keel.main"
                "--initialize-at-build-time"
+               "--enable-http"
+               "--enable-https"
+               ;; FIXME: DEBUG ONLY (will cause runtime exceptions)
+               "--report-unsupported-elements-at-runtime"
                "-H:Name=keel"]
    :jvm-opts ["-Dclojure.compiler.direct-linking=true"]
    :extra-deps

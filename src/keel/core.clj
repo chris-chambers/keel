@@ -168,7 +168,8 @@
         ;; `::aborted` when the called has aborted this process.
         active-conn (atom ::none)
         abortfn (fn abort []
-                  (let [[conn _] (reset-vals! active-conn ::aborted)]
+                  (throw (Exception. "abort is hard to implement on Clojure < 1.9.0. Waiting on GraalVM 19.3, for JDK 11 and the new HTTPClient, anyway"))
+                  #_(let [[conn _] (reset-vals! active-conn ::aborted)]
                     (if-not (#{::none ::aborted} conn)
                       (k/abort! conn))))]
     (async/go-loop [plan' plan]
