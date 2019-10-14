@@ -1,10 +1,10 @@
 {:paths ["resources" "src"]
- :deps {org.clojure/clojure {:mvn/version "1.8.0"}
+ :deps {org.clojure/clojure {:mvn/version "1.10.1"}
         org.clojure/core.match {:mvn/version "0.3.0"}
         org.clojure/tools.cli {:mvn/version "0.4.2"}
 
         kapibara {:git/url "https://github.com/chris-chambers/kapibara.git"
-                  :sha "759b18b7f46b1b0d1a910e6a078125b73080dacf"}}
+                  :sha "9168b84e68cea43226af9816ba3b6ca64afe2c86"}}
  :aliases
  {:native
   {:main-opts ["-m clj.native-image keel.main"
