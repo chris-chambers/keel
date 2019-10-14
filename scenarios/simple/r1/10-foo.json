@@ -1,0 +1,11 @@
+{
+  "apiVersion": "v1",
+  "kind": "ConfigMap",
+  "metadata": {
+    "namespace": "default",
+    "name": "foo",
+    "annotations": {
+      "tender.dev/release": "1"
+    }
+  }
+}

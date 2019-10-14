@@ -1,4 +1,4 @@
-(set! *warn-on-reflection* true)
+#_(set! *warn-on-reflection* true)
 
 (ns keel.main
   (:require [clojure.string :as str]
@@ -19,10 +19,12 @@
 
 
 (def actions
-  {"get"    #'cmd/get
-   "plan"   #'cmd/plan
-   "apply"  #'cmd/apply
-   "stable" #'cmd/stable})
+  {"get"     #'cmd/get
+   "collect" #'cmd/collect
+   "plan"    #'cmd/plan
+   "apply"   #'cmd/apply
+   "reverse" #'cmd/reverse
+   "stable"  #'cmd/stable})
 
 
 (defn -main-core
@@ -63,12 +65,11 @@
   (-main-core)
 
   (-main-core "get" "-w" "/api/v1/namespaces/default/configmaps")
-  (-main-core "plan")
 
-  (-main-core "plan" "-rf" "one.json" "-l" "things.txt" "-f" "two.json")
+  (-main-core "collect" "-Rf" "one.json" "-l" "things.txt" "-f" "two.json")
 
 
-  (-main-core "plan"
+  (-main-core "collect"
               "--live" "live.json"
 
               "--start"
@@ -80,15 +81,25 @@
               "-l" "target-things.txt")
 
 
-  (-main-core "plan"
-              "--start"
-              "-f" "source-one.json"
-              "-l" "source-things.txt"
+  ;; simple install
+  (-main-core "collect"
 
               "--target"
-              "-f" "target-one.json"
-              "-l" "target-things.txt")
+              "-f" "scenarios/simple/r1/foo.json")
 
+  ;; simple delete
+  (-main-core "collect"
+
+              "--start"
+              "-f" "scenarios/simple/r1/foo.json")
+
+
+  ;; TODO: Figure out how to set stdin when testing. (Should be possible to bind
+  ;;       *in* to a string stream)
+  (-main-core "plan" "waybill.json")
+
+  ;; TODO: Figure out how to set stdin when testing. (Should be possible to bind
+  ;;       *in* to a string stream)
   (-main-core "apply" "plan.json")
   (-main-core "stable")
 

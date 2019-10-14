@@ -2,6 +2,8 @@
   (:refer-clojure :exclude [apply get])
   (:require [clojure.core.async :as async]
             [clojure.core.match :refer [match]]
+            [clojure.data.json :as json]
+            [clojure.java.io :as io]
             [clojure.string :as str]
 
             [kapibara.core :as k]
@@ -33,6 +35,13 @@
          (when (:namespaced resource)
            {:namespace/name (-> obj :metadata :namespace)})
          {:object/name (-> obj :metadata :name)}))
+
+;; TODO: May belong in keel.resources
+;; FIXME: Figure out what to do here.  One function from resource+obj, one from
+;;        resource-cache+obj.
+(defn object->ref-XX
+  [resource-cache obj]
+  (object->ref (object->resource resource-cache obj) obj))
 
 
 (defn- get-one
@@ -70,6 +79,17 @@
    (watch client resource-cache refs nil))
   ([client resource-cache refs options]
    (k/merge-requests (map #(watch-one client resource-cache % options) refs))))
+
+
+(defn collect
+  [sources]
+  ;; TODO: Support :list and :recursive
+  ;; TODO: Error handling/reporting for missing files.
+  (into [] (comp
+            (map :file)
+            (map io/reader)
+            (map #(json/read % :key-fn keyword)))
+        sources))
 
 
 ;; FIXME: Needs to use a resource cache to produce canonical refs (synthetic,
@@ -185,7 +205,7 @@
               (async/>! ch (merge plan-item {:result result}))
               ;; If aborted, or if the result was an error, stop early.
               (when (and (compare-and-set! active-conn conn ::none)
-                         (not (:kapibara/error result)))
+                         (not (:kapibara.core/error result)))
                 (recur (rest plan')))))
           (do
             (async/>! ch plan-item)
@@ -276,7 +296,7 @@
     (def live
       (let [refs (set (map #(object->ref (object->resource res-cache %) %)
                            (concat start target)))]
-        (remove #(:kapibara/error %)
+        (remove #(:kapibara.core/error %)
                 (<!! (async/into [] @(get client res-cache refs))))))
 
     (let [plan (plan-apply start live target)]
@@ -309,7 +329,7 @@
     (def live
       (let [refs (set (map #(object->ref (object->resource res-cache %) %)
                            (concat start target)))]
-        (remove #(:kapibara/error %)
+        (remove #(:kapibara.core/error %)
                 (<!! (async/into [] @(get client res-cache refs))))))
 
     (let [plan (plan-apply start live target)]

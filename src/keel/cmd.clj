@@ -1,5 +1,5 @@
 (ns keel.cmd
-  (:refer-clojure :exclude [apply get])
+  (:refer-clojure :exclude [apply get reverse])
   (:require [clojure.core.async :refer [<!!] :as async]
             [clojure.data.json :as json]
             [clojure.java.io :as io]
@@ -37,8 +37,16 @@
     (<!! (print-request-items req))))
 
 
-(defn plan
-  {:cli/usage "[FILENAME]"
+(defn- get-live-state-from-objects
+  [client resource-cache objects]
+  (let [refs (set (map #(core/object->ref-XX resource-cache %) objects))]
+    ;; FIXME: die on error.
+    (remove #(:kapibara.core/error %)
+            (<!! (async/into [] @(core/get client resource-cache refs))))))
+
+
+(defn collect
+  {:cli/usage ""
    :cli/options [["-s" "--start"
                   :assoc-fn (cli/comp-middleware (cli/assoc-at :last-group)
                                                  (cli/with-value :start))]
@@ -62,28 +70,64 @@
                                                  cli/maybe-recursive
                                                  (cli/clear :recursive)
                                                  cli/concat-value)]
-                 ["-z" "--live FILENAME"
-                  :parse-fn io/as-file]]}
+                 ["-z" "--[no-]live"
+                  :default false]]}
   [args options]
+  (let [start-sources (filter #(= :start (:group %)) (:inputs options))
+        start (core/collect start-sources)
+        target-sources (filter #(= :target (:group %)) (:inputs options))
+        target (core/collect target-sources)]
+    (json/pprint (merge (when (not-empty start-sources) {:start start})
+                        (when (not-empty target-sources) {:target target})
+                        (when (:live options)
+                          (let [client (k/make-client "http://localhost:8080")
+                                res-cache (res/hack-build-api-resource-cache-from-scratch client)
+                                live (get-live-state-from-objects client res-cache (concat start target))]
+                            {:live live})))
+                 :escape-slash false)))
 
-  ;; TODO: Look for a waybill as the one-and-only argument.  If `:inputs` or
-  ;;       `:live` are set along with the waybill, die.
-  ;; TODO: Round up all the resources given by `:inputs` and `:live`.
-  ;; TODO: If `:live` is not present, query the cluster based on `:inputs`.
 
-  #_(core/plan-apply start live target))
+(defn plan
+  {:cli/usage "[FILENAME]"
+   :cli/options []}
+  [args options]
+  (let [client (k/make-client "http://localhost:8080")
+        res-cache (res/hack-build-api-resource-cache-from-scratch client)
+        ;; TODO: Don't always read from stdin.  Check args[0]
+        {:keys [start live target]} (json/read *in* :key-fn keyword)
+        live (if live
+               live
+               (get-live-state-from-objects client res-cache (concat start target)))
+        plan (core/plan-apply start live target)]
+    (json/pprint plan :escape-slash false))
+  {:status 0})
 
 
 (defn apply
-  {:cli/options []}
+  {:cli/usage "[FILENAME]"
+   :cli/options []}
   [args options]
 
-  ;; TODO: Read the plan from a file in args[0], or from stdin.
-  ;; TODO: Create-or-load the resource cache for this server.
   ;; TODO: Validate that the `live` list in the plan matches the cluster
   ;;       (by resource uid and version).  If not, die. (add an override flag?)
-  ;; TODO: Print/write the result of applying.
-  #_(core/execute-apply resource-cache plan))
+
+  (let [client (k/make-client "http://localhost:8080")
+        res-cache (res/hack-build-api-resource-cache-from-scratch client)
+        ;; TODO: Don't always read from stdin.  Check args[0]
+        plan (into [] (map #(update % :action keyword))
+                   (json/read *in* :key-fn keyword))
+        req (core/execute-apply client res-cache plan)]
+
+    (<!! (print-request-items req))))
+
+
+(defn reverse
+  {:cli/usage ""
+   :cli/options []}
+  [args options]
+  ;; TODO: reverse should take the output of `apply` and produce a waybill for
+  ;;       `plan` that puts everything back like it was.
+  (println "reverse" args options))
 
 
 (defn stable
