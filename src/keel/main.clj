@@ -8,14 +8,17 @@
   (:gen-class))
 
 
+(def usage "usage: keel")
+
+
 (def root-option-spec
-  [])
+  [["-h" "--help"]])
 
 
 (defn -usage
   [action summary]
   ;; TODO: Improve `-usage`
-  (str action ":\n" summary))
+  (str "usage: " action "\n\n" summary))
 
 
 (def actions
@@ -37,7 +40,7 @@
     (cond
       ;; TODO: Make this `errors` handling reusable for subcommands.
       errors {:status 1 :message (str/join "\n" errors)}
-      (nil? action) {:status 1 :message (-usage nil summary)}
+      (nil? action) {:status 1 :message (-usage "keel" summary)}
       :else
       (let [action-var (actions action)]
         (if-not action-var
@@ -49,6 +52,11 @@
             (cond
               errors {:status 1 :message (str/join "\n" errors)}
               :else (action-var arguments action-options))))))))
+
+(comment
+  (println (:message (-main-core "get")))
+
+  )
 
 
 (defn -main
