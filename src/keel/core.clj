@@ -83,12 +83,34 @@
    (k/merge-responses (map #(watch-one client resource-cache % options) refs))))
 
 
+(def ^:private sources-to-files
+  (comp
+   (map #(cond
+           (and (:file %) (:recursive %))
+           (->> (:file %)
+                io/file
+                file-seq
+                (filter (fn [^java.io.File f] (.isFile f)))
+                sort)
+
+           (:file %)
+           [(io/file (:file %))]
+
+           (:list %)
+           (let [dir (.getParentFile (io/file (:list %)))]
+             (map (fn [f] (io/file dir f))
+                  (str/split-lines (slurp (:list %)))))
+
+           :else
+           nil))
+   cat))
+
+
 (defn collect
   [sources]
-  ;; TODO: Support :list and :recursive
   ;; TODO: Error handling/reporting for missing files.
   (into [] (comp
-            (map :file)
+            sources-to-files
             (map io/reader)
             (map #(json/read % :key-fn keyword)))
         sources))
@@ -219,8 +241,14 @@
     (k/->Response ch abortfn)))
 
 (comment
-  (plan-apply start live target)
+  (into [] sources-to-files
+        [#_{:file "/Users/chris/projects/keel/scenarios/simple/r1/10-foo.json"}
+         #_{:file "/Users/chris/projects/keel/scenarios/simple/r1/20-bar.json"}
+         #_{:file "/Users/chris/projects/keel/scenarios/simple/r1"
+            :recursive true}
+         {:list "/Users/chris/projects/keel/scenarios/simple/r1.txt"}])
 
+  (plan-apply start live target)
 
   (<!! @(execute-apply client res-cache (plan-apply start live target)) )
 

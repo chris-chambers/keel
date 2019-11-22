@@ -67,7 +67,6 @@
                   :assoc-fn (cli/comp-middleware (cli/assoc-at :inputs)
                                                  (cli/tag-value :list)
                                                  cli/set-group
-                                                 cli/maybe-recursive
                                                  (cli/clear :recursive)
                                                  cli/concat-value)]
                  ["-z" "--[no-]live"

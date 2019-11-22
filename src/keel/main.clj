@@ -93,13 +93,13 @@
   (-main-core "collect"
 
               "--target"
-              "-f" "scenarios/simple/r1/foo.json")
+              "-f" "scenarios/simple/r1/10-foo.json")
 
   ;; simple delete
   (-main-core "collect"
 
               "--start"
-              "-f" "scenarios/simple/r1/foo.json")
+              "-f" "scenarios/simple/r1/10-foo.json")
 
 
   ;; TODO: Figure out how to set stdin when testing. (Should be possible to bind
