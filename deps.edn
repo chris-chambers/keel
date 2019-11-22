@@ -4,7 +4,9 @@
         org.clojure/tools.cli {:mvn/version "0.4.2"}
 
         kapibara {:git/url "https://github.com/chris-chambers/kapibara.git"
-                  :sha "b1c03641c5dbcca69f0e6673cf3914fb149e8c70"}}
+                  :sha "80f5d5ea0a14c150e02edf9a9f5cd7601b191ac5"
+                  ;; :local/root "/Users/chris/projects/kapibara"
+                  }}
  :aliases
  {:native
   {:main-opts ["-m clj.native-image keel.main"

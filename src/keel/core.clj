@@ -55,8 +55,9 @@
                             (map kr/distribute-list-version-kind)
                             kr/unpack-list)))]
 
-    (k/update-request-chan
-     (kr/request client (merge ref options {:resource resource}))
+    (k/update-response-chan
+     (k/send! client
+              (kr/request client (merge ref options {:resource resource})))
      #(async/pipe % ch))))
 
 
@@ -64,21 +65,22 @@
   ([client resource-cache refs]
    (get client resource-cache refs nil))
   ([client resource-cache refs options]
-   (k/merge-requests (map #(get-one client resource-cache % options) refs))))
+   (k/merge-responses (map #(get-one client resource-cache % options) refs))))
 
 
 (defn- watch-one
   [client resource-cache ref options]
   (let [resource (ref->resource resource-cache ref)]
-    (kr/request client (merge ref options {:resource resource
-                                           :verb :watch}))))
+    (k/send! client
+             (kr/request client (merge ref options {:resource resource
+                                                    :verb :watch})))))
 
 
 (defn watch
   ([client resource-cache refs]
    (watch client resource-cache refs nil))
   ([client resource-cache refs options]
-   (k/merge-requests (map #(watch-one client resource-cache % options) refs))))
+   (k/merge-responses (map #(watch-one client resource-cache % options) refs))))
 
 
 (defn collect
@@ -174,15 +176,15 @@
                         :verb verb}
                        (object->ref resource obj))]
     (when verb
-      (kr/request client options))))
+      (k/send! client (kr/request client options)))))
 
 
 (defn execute-apply
   [client resource-cache plan]
   ;; REVIEW: This code is fairly intricate to allow the whole request to be
   ;;         aborted without leaking anything.  Is it possible to make the
-  ;;         concept of a serial, abortable `kapibara/Request` part of Kapibara
-  ;;         itself?  Similar to `kapibara/merge-requests`, but lazy and serial.
+  ;;         concept of a serial, abortable `kapibara/Response` part of Kapibara
+  ;;         itself?  Similar to `kapibara/merge-responses`, but lazy and serial.
   (let [ch (async/chan)
         ;; Keeps the currently-active connection for `abortfn` to use.  Contains
         ;; `::aborted` when the called has aborted this process.
@@ -214,7 +216,7 @@
         ;; to an idle state.
         (do (async/close! ch)
             (reset! active-conn ::none))))
-    (k/->Request ch abortfn)))
+    (k/->Response ch abortfn)))
 
 (comment
   (plan-apply start live target)
@@ -229,7 +231,7 @@
                     ["/api/v1/namespaces/default/configmaps"
                      #_"/api/v1/namespaces/foo/configmaps"]))
 
-    (def client (k/make-client "http://localhost:8080"))
+    (def client (k/client {:uri "http://localhost:8001"}))
     (def res-cache (res/hack-build-api-resource-cache-from-scratch client)))
 
   (def x (get client res-cache refs))

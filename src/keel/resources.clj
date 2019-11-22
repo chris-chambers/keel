@@ -109,7 +109,7 @@
      :by-kind (reduce cache-api-resource-list-by-kind {} all-res)}))
 
 (comment
-  (def client (k/make-client "http://localhost:8080"))
+  (def client (k/client {:uri "http://localhost:8001"}))
 
   (hack-build-api-resource-cache-from-scratch client)
 

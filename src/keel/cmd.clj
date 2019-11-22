@@ -27,7 +27,7 @@
   {:cli/usage "[REF ...]"
    :cli/options [["-w" "--watch"]]}
   [args options]
-  (let [client (k/make-client "http://localhost:8080")
+  (let [client (k/client {:uri "http://localhost:8001"})
         res-cache (res/hack-build-api-resource-cache-from-scratch client)
         refs (map res/parse-ref args)
         prn-chan (async/chan 2 (map json/pprint))
@@ -80,7 +80,7 @@
     (json/pprint (merge (when (not-empty start-sources) {:start start})
                         (when (not-empty target-sources) {:target target})
                         (when (:live options)
-                          (let [client (k/make-client "http://localhost:8080")
+                          (let [client (k/client {:uri "http://localhost:8001"})
                                 res-cache (res/hack-build-api-resource-cache-from-scratch client)
                                 live (get-live-state-from-objects client res-cache (concat start target))]
                             {:live live})))
@@ -91,7 +91,7 @@
   {:cli/usage "[FILENAME]"
    :cli/options []}
   [args options]
-  (let [client (k/make-client "http://localhost:8080")
+  (let [client (k/client {:uri "http://localhost:8001"})
         res-cache (res/hack-build-api-resource-cache-from-scratch client)
         ;; TODO: Don't always read from stdin.  Check args[0]
         {:keys [start live target]} (json/read *in* :key-fn keyword)
@@ -111,7 +111,7 @@
   ;; TODO: Validate that the `live` list in the plan matches the cluster
   ;;       (by resource uid and version).  If not, die. (add an override flag?)
 
-  (let [client (k/make-client "http://localhost:8080")
+  (let [client (k/client {:uri "http://localhost:8001"})
         res-cache (res/hack-build-api-resource-cache-from-scratch client)
         ;; TODO: Don't always read from stdin.  Check args[0]
         plan (into [] (map #(update % :action keyword))
